@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Career Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #050810;
+  --surface: #0d1120;
+  --card: #111827;
+  --border: rgba(99,179,237,0.15);
+  --cyan: #63b3ed;
+  --violet: #a78bfa;
+  --pink: #f472b6;
+  --green: #34d399;
+  --orange: #fb923c;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --glow-c: rgba(99,179,237,0.4);
+  --glow-v: rgba(167,139,250,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;overflow-x:hidden;cursor:none}
+
+/* ── Custom Cursor ── */
+#cursor{position:fixed;width:12px;height:12px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transition:transform .15s,background .2s;mix-blend-mode:screen}
+#cursor-trail{position:fixed;width:36px;height:36px;border:1.5px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9998;transition:left .08s,top .08s,opacity .3s;opacity:.5}
+
+/* ── Stars Canvas ── */
+#stars-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ── Noise overlay ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");opacity:.4;z-index:1;pointer-events:none}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;width:100%;z-index:100;padding:18px 6%;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px);background:rgba(5,8,16,.7);border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.85rem;font-weight:500;letter-spacing:.5px;transition:color .3s;text-transform:uppercase}
+.nav-links a:hover{color:var(--cyan)}
+.nav-cta{padding:9px 22px;background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;border-radius:50px;color:#050810;font-weight:700;font-size:.82rem;cursor:none;letter-spacing:.5px;transition:transform .2s,box-shadow .2s}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--glow-c)}
+
+/* ── HERO ── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;z-index:2;padding:120px 6% 80px}
+.hero-inner{max-width:860px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border:1px solid var(--border);border-radius:50px;font-size:.75rem;color:var(--cyan);margin-bottom:28px;animation:fadeSlideDown .8s ease forwards;background:rgba(99,179,237,.06)}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(3rem,7vw,5.5rem);font-weight:800;line-height:1.05;letter-spacing:-2px;opacity:0;animation:fadeSlideUp .9s .2s ease forwards}
+.gradient-word{background:linear-gradient(135deg,var(--cyan) 0%,var(--violet) 50%,var(--pink) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:gradShift 4s infinite alternate}
+@keyframes gradShift{from{background-position:0%}to{background-position:100%}}
+.hero-sub{margin-top:22px;font-size:1.1rem;color:var(--muted);line-height:1.8;max-width:580px;margin-inline:auto;opacity:0;animation:fadeSlideUp .9s .4s ease forwards}
+.hero-btns{margin-top:44px;display:flex;gap:16px;justify-content:center;opacity:0;animation:fadeSlideUp .9s .6s ease forwards}
+.btn-primary{padding:14px 34px;background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;border-radius:50px;color:#050810;font-weight:800;font-size:.95rem;cursor:none;letter-spacing:.3px;transition:transform .2s,box-shadow .3s}
+.btn-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 16px 50px var(--glow-c)}
+.btn-secondary{padding:14px 34px;background:transparent;border:1.5px solid var(--border);border-radius:50px;color:var(--text);font-weight:600;font-size:.95rem;cursor:none;transition:border-color .3s,background .3s}
+.btn-secondary:hover{border-color:var(--cyan);background:rgba(99,179,237,.07)}
+.hero-stats{margin-top:64px;display:flex;gap:48px;justify-content:center;opacity:0;animation:fadeSlideUp .9s .8s ease forwards}
+.stat{text-align:center}
+.stat-num{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.hero-glow{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(99,179,237,.12) 0%,transparent 70%);pointer-events:none;animation:glowPulse 6s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8}50%{transform:translate(-50%,-50%) scale(1.2);opacity:1}}
+
+/* ── Floating orbs ── */
+.orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;animation:orbFloat linear infinite}
+.orb1{width:300px;height:300px;background:rgba(99,179,237,.08);top:10%;left:5%;animation-duration:20s}
+.orb2{width:200px;height:200px;background:rgba(167,139,250,.1);top:60%;right:8%;animation-duration:15s;animation-delay:-7s}
+.orb3{width:250px;height:250px;background:rgba(244,114,182,.06);bottom:10%;left:30%;animation-duration:18s;animation-delay:-3s}
+@keyframes orbFloat{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-40px) rotate(180deg)}100%{transform:translateY(0) rotate(360deg)}}
+
+/* ── Scroll indicator ── */
+.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.5;animation:bounce 2s infinite}
+.scroll-hint span{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.scroll-arrow{width:20px;height:20px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg)}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* ── Section commons ── */
+section{position:relative;z-index:2;padding:100px 6%}
+.section-tag{display:inline-block;font-size:.72rem;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;font-family:'Space Mono',monospace}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:800;letter-spacing:-1px;line-height:1.1}
+.section-sub{color:var(--muted);font-size:1rem;line-height:1.8;margin-top:14px;max-width:520px}
+
+/* ── HOW IT WORKS ── */
+#how{background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 100%)}
+.workflow-wrap{margin-top:64px;display:grid;gap:24px}
+.flow-step{display:flex;align-items:flex-start;gap:24px;padding:28px 32px;background:var(--card);border:1px solid var(--border);border-radius:20px;position:relative;overflow:hidden;transition:transform .4s,border-color .4s;opacity:0;transform:translateX(-40px)}
+.flow-step.visible{opacity:1;transform:translateX(0);transition:opacity .6s,transform .6s}
+.flow-step::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,179,237,.04),transparent);opacity:0;transition:opacity .4s}
+.flow-step:hover{border-color:var(--cyan);transform:translateX(6px)}
+.flow-step:hover::before{opacity:1}
+.step-num{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--cyan);opacity:.6;min-width:40px;padding-top:4px}
+.step-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.step-content h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.step-content p{color:var(--muted);font-size:.88rem;line-height:1.7}
+.flow-line{width:2px;background:linear-gradient(180deg,var(--cyan),var(--violet));height:60px;margin:0 auto;opacity:.3}
+
+/* ── MODULES ── */
+#modules{background:var(--surface)}
+.modules-grid{margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.mod-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:36px;position:relative;overflow:hidden;transition:transform .4s,box-shadow .4s;opacity:0;transform:translateY(40px)}
+.mod-card.visible{opacity:1;transform:translateY(0)}
+.mod-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 70% 20%,var(--glow-c),transparent 60%);opacity:0;transition:opacity .5s;pointer-events:none}
+.mod-card:hover{transform:translateY(-8px);box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.mod-card:hover::after{opacity:1}
+.mod-num{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:2px;margin-bottom:16px;text-transform:uppercase}
+.mod-icon-wrap{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:20px;position:relative}
+.mod-icon-wrap::before{content:'';position:absolute;inset:-1px;border-radius:19px;background:linear-gradient(135deg,var(--cyan),var(--violet));z-index:-1;opacity:.5}
+.mod-card h3{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;margin-bottom:10px}
+.mod-card p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:20px}
+.mod-features{list-style:none;display:flex;flex-direction:column;gap:8px}
+.mod-features li{display:flex;align-items:center;gap:10px;font-size:.83rem;color:var(--muted)}
+.mod-features li::before{content:'→';color:var(--cyan);font-size:.8rem;flex-shrink:0}
+.mod-tag{position:absolute;top:20px;right:20px;padding:4px 12px;border-radius:50px;font-size:.68rem;font-weight:700;letter-spacing:.5px}
+
+/* ── TECH STACK ── */
+#tech{background:var(--bg)}
+.tech-grid{margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.tech-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 20px;text-align:center;transition:transform .3s,border-color .3s,box-shadow .3s;opacity:0;transform:scale(.9);cursor:none}
+.tech-card.visible{opacity:1;transform:scale(1)}
+.tech-card:hover{transform:translateY(-6px) scale(1.03);border-color:var(--violet);box-shadow:0 12px 40px var(--glow-v)}
+.tech-emoji{font-size:2.2rem;display:block;margin-bottom:12px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))}
+.tech-name{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:4px}
+.tech-type{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.tech-bar{margin-top:14px;height:3px;background:var(--border);border-radius:50px;overflow:hidden}
+.tech-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,var(--cyan),var(--violet));width:0;transition:width 1s .3s ease}
+.tech-card.visible .tech-fill{width:var(--fill)}
+
+/* ── TEAM ── */
+#team{background:var(--surface)}
+.team-grid{margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px}
+.team-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:36px;position:relative;overflow:hidden;transition:transform .4s;opacity:0;transform:translateY(40px)}
+.team-card.visible{opacity:1;transform:translateY(0)}
+.team-card:hover{transform:translateY(-6px)}
+.team-avatar{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:20px;position:relative}
+.team-avatar::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet),var(--pink));z-index:-1;animation:rotateGrad 4s linear infinite}
+@keyframes rotateGrad{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.team-member{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.team-role{font-size:.8rem;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.team-tasks{list-style:none;display:flex;flex-direction:column;gap:8px}
+.team-tasks li{display:flex;align-items:center;gap:10px;font-size:.84rem;color:var(--muted)}
+.team-tasks li::before{content:'▸';color:var(--violet)}
+.card-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;filter:blur(40px);opacity:.2}
+
+/* ── TIMELINE ── */
+#timeline{background:var(--bg)}
+.timeline-wrap{margin-top:64px;position:relative;max-width:700px;margin-inline:auto}
+.timeline-wrap::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),var(--violet),var(--pink));opacity:.3}
+.tl-item{display:flex;gap:24px;margin-bottom:48px;opacity:0}
+.tl-item.visible{opacity:1;transition:opacity .6s}
+.tl-item:nth-child(odd){flex-direction:row}
+.tl-item:nth-child(even){flex-direction:row-reverse}
+.tl-content{flex:1;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;transition:border-color .3s}
+.tl-content:hover{border-color:var(--cyan)}
+.tl-dot{flex-shrink:0;width:14px;height:14px;background:var(--cyan);border-radius:50%;margin-top:24px;position:relative;box-shadow:0 0 20px var(--glow-c)}
+.tl-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--cyan);opacity:.4;animation:ringPulse 2s infinite}
+@keyframes ringPulse{0%{transform:scale(1);opacity:.4}100%{transform:scale(2);opacity:0}}
+.tl-day{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.tl-content h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:6px}
+.tl-content p{color:var(--muted);font-size:.83rem;line-height:1.7}
+
+/* ── FUTURE ── */
+#future{background:var(--surface)}
+.future-grid{margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.future-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;transition:transform .3s,border-color .3s;opacity:0;transform:translateY(30px);position:relative;overflow:hidden}
+.future-card.visible{opacity:1;transform:translateY(0)}
+.future-card:hover{transform:translateY(-5px);border-color:var(--pink)}
+.future-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));transform:scaleX(0);transition:transform .4s;transform-origin:left}
+.future-card:hover::before{transform:scaleX(1)}
+.future-icon{font-size:2rem;margin-bottom:16px}
+.future-card h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:8px}
+.future-card p{color:var(--muted);font-size:.83rem;line-height:1.7}
+.future-badge{display:inline-block;margin-top:14px;padding:3px 10px;border-radius:50px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);font-size:.68rem;color:var(--violet);font-weight:600}
+
+/* ── CTA FOOTER ── */
+#cta{background:var(--bg);text-align:center;padding:120px 6%}
+.cta-inner{max-width:640px;margin:0 auto}
+.cta-inner h2{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;letter-spacing:-1.5px;line-height:1.1}
+.cta-inner p{color:var(--muted);margin-top:18px;font-size:1rem;line-height:1.8}
+.cta-btns{margin-top:44px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.cta-glow{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:500px;height:300px;background:radial-gradient(ellipse,rgba(167,139,250,.12),transparent 70%);pointer-events:none}
+footer{text-align:center;padding:28px;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;font-family:'Space Mono',monospace;z-index:2;position:relative}
+
+/* ── Animations ── */
+@keyframes fadeSlideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Progress bar ── */
+#progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));z-index:200;width:0;transition:width .1s linear}
+
+/* ── Particle count badge ── */
+.particle-ring{animation:particleSpin 3s linear infinite}
+@keyframes particleSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ── Typing cursor ── */
+.typing::after{content:'|';animation:blink .7s step-end infinite;color:var(--cyan)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  .hero-stats{gap:24px}
+  .tl-item{flex-direction:column!important}
+  .timeline-wrap::before{left:20px}
+  nav .nav-links{display:none}
+  body{cursor:auto}
+  #cursor,#cursor-trail{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div id="progress-bar"></div>
+
+<!-- Custom Cursor -->
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- Stars -->
+<canvas id="stars-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">⚡ CareerAI</div>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#modules">Modules</a></li>
+    <li><a href="#tech">Tech Stack</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#timeline">Timeline</a></li>
+  </ul>
+  <button class="nav-cta" onclick="scrollTo({top:document.getElementById('modules').offsetTop,behavior:'smooth'})">Explore →</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">🟢 &nbsp; College Project · AI + Web Development</div>
+    <h1>
+      Navigate Your<br>
+      <span class="gradient-word typing" id="typing-text">Career</span><br>
+      with AI Power
+    </h1>
+    <p class="hero-sub">
+      Upload your resume, discover matching companies, and bridge your skill gaps — all powered by intelligent AI analysis.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="scrollTo({top:document.getElementById('modules').offsetTop,behavior:'smooth'})">🚀 Explore Modules</button>
+      <button class="btn-secondary" onclick="scrollTo({top:document.getElementById('timeline').offsetTop,behavior:'smooth'})">📅 View Timeline</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num" data-count="3">0</div><div class="stat-label">Core Modules</div></div>
+      <div class="stat"><div class="stat-num" data-count="7">0</div><div class="stat-label">Day Build Plan</div></div>
+      <div class="stat"><div class="stat-num" data-count="3">0</div><div class="stat-label">Team Members</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span>Scroll</span><div class="scroll-arrow"></div></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="section-tag">// system workflow</div>
+    <h2 class="section-title">How It <span class="gradient-word">Works</span></h2>
+    <p class="section-sub">A seamless 8-step pipeline from resume upload to personalized career recommendations.</p>
+    <div class="workflow-wrap">
+      <div class="flow-step" style="transition-delay:.1s">
+        <span class="step-num">01</span>
+        <div class="step-icon" style="background:rgba(99,179,237,.1)">📄</div>
+        <div class="step-content"><h3>Upload Resume</h3><p>User uploads their resume in PDF format through the intuitive web interface.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.2s">
+        <span class="step-num">02</span>
+        <div class="step-icon" style="background:rgba(167,139,250,.1)">🔍</div>
+        <div class="step-content"><h3>Text Extraction</h3><p>PyPDF2 extracts and processes raw text from the uploaded document.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.3s">
+        <span class="step-num">03</span>
+        <div class="step-icon" style="background:rgba(52,211,153,.1)">🧠</div>
+        <div class="step-content"><h3>AI Skill Detection</h3><p>NLP algorithms identify skills, education, and work experience from the text.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.4s">
+        <span class="step-num">04</span>
+        <div class="step-icon" style="background:rgba(251,146,60,.1)">📊</div>
+        <div class="step-content"><h3>Resume Scoring</h3><p>Generate a resume score with detailed improvement suggestions and feedback.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.5s">
+        <span class="step-num">05</span>
+        <div class="step-icon" style="background:rgba(244,114,182,.1)">🎯</div>
+        <div class="step-content"><h3>Job Role Selection</h3><p>User selects their desired job role and preferred work location.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.6s">
+        <span class="step-num">06</span>
+        <div class="step-icon" style="background:rgba(99,179,237,.1)">🏢</div>
+        <div class="step-content"><h3>Company Matching</h3><p>System compares user skills with job requirements and recommends matching companies.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.7s">
+        <span class="step-num">07</span>
+        <div class="step-icon" style="background:rgba(167,139,250,.1)">⚡</div>
+        <div class="step-content"><h3>Skill Gap Analysis</h3><p>Detects which skills are missing for the target job role.</p></div>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" style="transition-delay:.8s">
+        <span class="step-num">08</span>
+        <div class="step-icon" style="background:rgba(52,211,153,.1)">📚</div>
+        <div class="step-content"><h3>Learning Resources</h3><p>Recommends Coursera, YouTube, LinkedIn Learning courses to fill skill gaps.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section id="modules">
+  <div class="section-tag">// core modules</div>
+  <h2 class="section-title">Three Powerful <span class="gradient-word">Modules</span></h2>
+  <p class="section-sub">Each module handles a specific part of the career navigation journey.</p>
+  <div class="modules-grid">
+    <div class="mod-card" style="transition-delay:.1s">
+      <div class="mod-num">Module 01</div>
+      <div class="mod-icon-wrap" style="background:rgba(99,179,237,.1)">🔬</div>
+      <div class="mod-tag" style="background:rgba(99,179,237,.1);color:var(--cyan)">AI Powered</div>
+      <h3>Resume Analyzer</h3>
+      <p>Upload your resume and get instant AI-powered analysis of your skills, education, and experience.</p>
+      <ul class="mod-features">
+        <li>PDF resume upload support</li>
+        <li>Skill & experience extraction</li>
+        <li>Resume score generation</li>
+        <li>Improvement suggestions</li>
+        <li>Section-wise analysis</li>
+      </ul>
+    </div>
+    <div class="mod-card" style="transition-delay:.25s">
+      <div class="mod-num">Module 02</div>
+      <div class="mod-icon-wrap" style="background:rgba(167,139,250,.1)">🏢</div>
+      <div class="mod-tag" style="background:rgba(167,139,250,.1);color:var(--violet)">Smart Match</div>
+      <h3>Company Recommender</h3>
+      <p>Get personalized company and job recommendations based on your skill profile and preferred location.</p>
+      <ul class="mod-features">
+        <li>Job role selection</li>
+        <li>Location-based filtering</li>
+        <li>Skill match scoring</li>
+        <li>Company job descriptions</li>
+        <li>Required skills display</li>
+      </ul>
+    </div>
+    <div class="mod-card" style="transition-delay:.4s">
+      <div class="mod-num">Module 03</div>
+      <div class="mod-icon-wrap" style="background:rgba(52,211,153,.1)">📈</div>
+      <div class="mod-tag" style="background:rgba(52,211,153,.1);color:var(--green)">Upskill</div>
+      <h3>Skill Upgrade System</h3>
+      <p>Identify your skill gaps and get curated learning resource recommendations to advance your career.</p>
+      <ul class="mod-features">
+        <li>Missing skill detection</li>
+        <li>Coursera recommendations</li>
+        <li>YouTube learning links</li>
+        <li>LinkedIn Learning paths</li>
+        <li>Priority skill ranking</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-tag">// technology stack</div>
+    <h2 class="section-title">Built With <span class="gradient-word">Modern Tech</span></h2>
+    <p class="section-sub">A robust full-stack setup combining web technologies with AI capabilities.</p>
+    <div class="tech-grid">
+      <div class="tech-card" style="--fill:90%;transition-delay:.05s">
+        <span class="tech-emoji">🌐</span>
+        <div class="tech-name">HTML / CSS</div>
+        <div class="tech-type">Frontend</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:85%;transition-delay:.1s">
+        <span class="tech-emoji">⚡</span>
+        <div class="tech-name">JavaScript</div>
+        <div class="tech-type">Frontend</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:88%;transition-delay:.15s">
+        <span class="tech-emoji">🐍</span>
+        <div class="tech-name">Python</div>
+        <div class="tech-type">Backend</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:80%;transition-delay:.2s">
+        <span class="tech-emoji">🌶️</span>
+        <div class="tech-name">Flask</div>
+        <div class="tech-type">Framework</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:75%;transition-delay:.25s">
+        <span class="tech-emoji">🗄️</span>
+        <div class="tech-name">SQLite / MySQL</div>
+        <div class="tech-type">Database</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:82%;transition-delay:.3s">
+        <span class="tech-emoji">📝</span>
+        <div class="tech-name">PyPDF2</div>
+        <div class="tech-type">PDF Parsing</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:78%;transition-delay:.35s">
+        <span class="tech-emoji">🧠</span>
+        <div class="tech-name">NLP / Keyword</div>
+        <div class="tech-type">AI Engine</div>
+        <div class="tech-bar"><div class="tech-fill"></div></div>
+      </div>
+      <div class="tech-card" style="--fill:70%;transition-delay:.4s">
+        <span class="tech-emoji">🔗</span>
+        <div class="tech-name">Job APIs</div>
+        <div class="tech-type">Future Scope</div>
+        <div class="tech-bar"><div class="tech-fill" style="background:linear-gradient(90deg,var(--violet),var(--pink))"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="section-tag">// team distribution</div>
+  <h2 class="section-title">Meet the <span class="gradient-word">Team</span></h2>
+  <p class="section-sub">Three specialists working together to build this AI-powered platform.</p>
+  <div class="team-grid">
+    <div class="team-card" style="transition-delay:.1s">
+      <div class="card-glow" style="background:var(--cyan)"></div>
+      <div class="team-avatar" style="background:rgba(99,179,237,.1)">🎨</div>
+      <div class="team-member">Member 1</div>
+      <div class="team-role">Frontend Developer</div>
+      <ul class="team-tasks">
+        <li>Design all UI pages & layouts</li>
+        <li>HTML/CSS styling & responsiveness</li>
+        <li>User interface interactions</li>
+        <li>Visual design & branding</li>
+        <li>Dashboard & results pages</li>
+      </ul>
+    </div>
+    <div class="team-card" style="transition-delay:.25s">
+      <div class="card-glow" style="background:var(--violet)"></div>
+      <div class="team-avatar" style="background:rgba(167,139,250,.1)">⚙️</div>
+      <div class="team-member">Member 2</div>
+      <div class="team-role">Backend Developer</div>
+      <ul class="team-tasks">
+        <li>Flask server setup & routing</li>
+        <li>Database design & integration</li>
+        <li>File upload handling (PDF)</li>
+        <li>REST API endpoints</li>
+        <li>Authentication & sessions</li>
+      </ul>
+    </div>
+    <div class="team-card" style="transition-delay:.4s">
+      <div class="card-glow" style="background:var(--pink)"></div>
+      <div class="team-avatar" style="background:rgba(244,114,182,.1)">🤖</div>
+      <div class="team-member">Member 3</div>
+      <div class="team-role">AI / Logic Developer</div>
+      <ul class="team-tasks">
+        <li>Resume parsing with PyPDF2</li>
+        <li>Skill extraction algorithm</li>
+        <li>Job matching logic</li>
+        <li>Skill gap detection</li>
+        <li>Learning resource mapping</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div style="max-width:900px;margin:0 auto;text-align:center">
+    <div class="section-tag">// 1-week sprint</div>
+    <h2 class="section-title">Development <span class="gradient-word">Timeline</span></h2>
+    <p class="section-sub" style="margin-inline:auto">From project planning to final presentation — 7 days, 7 milestones.</p>
+  </div>
+  <div class="timeline-wrap">
+    <div class="tl-item"><div class="tl-content"><div class="tl-day">Day 01</div><h3>🗺️ Planning & UI Mockups</h3><p>Plan project architecture, design wireframes, and create UI mockups for all screens.</p></div><div class="tl-dot"></div><div style="flex:1"></div></div>
+    <div class="tl-item"><div style="flex:1"></div><div class="tl-dot"></div><div class="tl-content"><div class="tl-day">Day 02</div><h3>🏗️ Flask Setup & Database</h3><p>Create Flask project structure, configure SQLite/MySQL database and schema.</p></div></div>
+    <div class="tl-item"><div class="tl-content"><div class="tl-day">Day 03</div><h3>📤 Resume Upload Feature</h3><p>Implement PDF file upload functionality with validation and storage system.</p></div><div class="tl-dot"></div><div style="flex:1"></div></div>
+    <div class="tl-item"><div style="flex:1"></div><div class="tl-dot"></div><div class="tl-content"><div class="tl-day">Day 04</div><h3>🔍 Text Extraction & Skills</h3><p>Integrate PyPDF2 for text extraction; build NLP-based skill detection engine.</p></div></div>
+    <div class="tl-item"><div class="tl-content"><div class="tl-day">Day 05</div><h3>🏢 Job Recommendation Logic</h3><p>Implement company and job recommendation algorithm based on skill matching.</p></div><div class="tl-dot"></div><div style="flex:1"></div></div>
+    <div class="tl-item"><div style="flex:1"></div><div class="tl-dot"></div><div class="tl-content"><div class="tl-day">Day 06</div><h3>📚 Skill Gap & Learning</h3><p>Build skill gap detection system and integrate learning resource suggestions.</p></div></div>
+    <div class="tl-item"><div class="tl-content"><div class="tl-day">Day 07</div><h3>🚀 Testing & Presentation</h3><p>Full system testing, bug fixes, UI polish, and final presentation preparation.</p></div><div class="tl-dot"></div><div style="flex:1"></div></div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+<section id="future">
+  <div class="section-tag">// future enhancements</div>
+  <h2 class="section-title">What's <span class="gradient-word">Next</span></h2>
+  <p class="section-sub">Planned improvements to make CareerAI even more powerful.</p>
+  <div class="future-grid">
+    <div class="future-card" style="transition-delay:.1s">
+      <div class="future-icon">🔗</div>
+      <h3>Real Job API Integration</h3>
+      <p>Connect with LinkedIn Jobs, Indeed, and Naukri for live job listings and real-time opportunities.</p>
+      <span class="future-badge">Phase 2</span>
+    </div>
+    <div class="future-card" style="transition-delay:.2s">
+      <div class="future-icon">🧠</div>
+      <h3>Advanced NLP Engine</h3>
+      <p>Upgrade from keyword matching to transformer-based NLP for deeper resume understanding and better accuracy.</p>
+      <span class="future-badge">Phase 2</span>
+    </div>
+    <div class="future-card" style="transition-delay:.3s">
+      <div class="future-icon">✨</div>
+      <h3>Auto Resume Formatter</h3>
+      <p>Automatically reformat and optimize resume structure, layout, and language for ATS systems.</p>
+      <span class="future-badge">Phase 3</span>
+    </div>
+    <div class="future-card" style="transition-delay:.4s">
+      <div class="future-icon">🛤️</div>
+      <h3>Career Path Recommender</h3>
+      <p>Suggest complete career roadmaps from entry-level to senior positions based on current skill profile.</p>
+      <span class="future-badge">Phase 3</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" style="position:relative">
+  <div class="cta-glow"></div>
+  <div class="cta-inner">
+    <div class="section-tag" style="display:block;text-align:center">// college project 2024</div>
+    <h2>Ready to <span class="gradient-word">Navigate</span> Your Career?</h2>
+    <p>AI Career Navigator — built with passion, Python, and a 7-day deadline. A college project that could change how students find their path.</p>
+    <div class="cta-btns">
+      <button class="btn-primary" onclick="scrollTo({top:0,behavior:'smooth'})">↑ Back to Top</button>
+      <button class="btn-secondary" onclick="scrollTo({top:document.getElementById('team').offsetTop,behavior:'smooth'})">Meet the Team</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>⚡ AI Career Navigator &nbsp;·&nbsp; College Project &nbsp;·&nbsp; Built with HTML, CSS, Flask & Python &nbsp;·&nbsp; 2024</p>
+</footer>
+
+<script>
+// ── Stars ──
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;stars=Array.from({length:180},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.5+.3,s:Math.random()*.5+.1,o:Math.random(),dir:Math.random()>.5?1:-1}))}
+resize(); window.addEventListener('resize',resize);
+function drawStars(){ctx.clearRect(0,0,canvas.width,canvas.height);stars.forEach(s=>{s.o+=s.s*.01*s.dir;if(s.o>1||s.o<.1)s.dir*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(99,179,237,${s.o})`;ctx.fill()})}
+function animStars(){drawStars();requestAnimationFrame(animStars)}
+animStars();
+
+// ── Cursor ──
+const cur = document.getElementById('cursor');
+const trail = document.getElementById('cursor-trail');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx-6+'px';cur.style.top=my-6+'px';setTimeout(()=>{trail.style.left=mx-18+'px';trail.style.top=my-18+'px'},60)});
+document.addEventListener('mousedown',()=>{cur.style.transform='scale(2)';cur.style.background='var(--violet)'});
+document.addEventListener('mouseup',()=>{cur.style.transform='scale(1)';cur.style.background='var(--cyan)'});
+
+// ── Progress bar ──
+const pb = document.getElementById('progress-bar');
+window.addEventListener('scroll',()=>{const p=(scrollY/(document.body.scrollHeight-innerHeight))*100;pb.style.width=p+'%'});
+
+// ── Typing animation ──
+const words=['Career','Future','Journey','Success','Dream'];
+let wi=0,ci=0,deleting=false;
+const typingEl=document.getElementById('typing-text');
+function type(){
+  const word=words[wi];
+  if(!deleting){typingEl.textContent=word.slice(0,ci+1);ci++;if(ci===word.length){deleting=true;setTimeout(type,1800);return}}
+  else{typingEl.textContent=word.slice(0,ci-1);ci--;if(ci===0){deleting=false;wi=(wi+1)%words.length}}
+  setTimeout(type,deleting?60:110);
+}
+setTimeout(type,1200);
+
+// ── Counter animation ──
+function animateCounters(){
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const target=+el.dataset.count,plus=el.dataset.count>9?'+':'';
+    let n=0;const step=()=>{n+=Math.ceil(target/20);if(n>=target){el.textContent=target+plus;return}el.textContent=n+plus;requestAnimationFrame(step)};
+    step();
+  });
+}
+setTimeout(animateCounters,900);
+
+// ── Scroll reveal ──
+const revealEls=document.querySelectorAll('.flow-step,.mod-card,.tech-card,.team-card,.tl-item,.future-card');
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}});
+},{threshold:.1});
+revealEls.forEach(el=>io.observe(el));
+
+// ── Tilt effect on cards ──
+document.querySelectorAll('.mod-card,.team-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`translateY(-8px) rotateX(${-y*8}deg) rotateY(${x*8}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform=''});
+});
+
+// ── Parallax on hero glows ──
+window.addEventListener('scroll',()=>{
+  const sy=scrollY;
+  document.querySelector('.hero-glow').style.transform=`translate(-50%,calc(-50% + ${sy*.3}px))`;
+  document.querySelectorAll('.orb').forEach((o,i)=>{o.style.transform=`translateY(${sy*(.1+i*.05)}px)`});
+});
+
+// ── Nav active highlight ──
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(scrollY>=s.offsetTop-100)cur=s.id});
+  navLinks.forEach(a=>{a.style.color=a.getAttribute('href')==='#'+cur?'var(--cyan)':'var(--muted)'});
+});
+
+// ── Tech card hover glow color ──
+document.querySelectorAll('.tech-card').forEach((c,i)=>{
+  const cols=['var(--cyan)','var(--violet)','var(--green)','var(--pink)','var(--orange)'];
+  c.addEventListener('mouseenter',()=>{c.style.boxShadow=`0 12px 40px ${cols[i%cols.length]}33`});
+  c.addEventListener('mouseleave',()=>{c.style.boxShadow=''});
+});
+
+// ── Stagger visible delays ──
+document.querySelectorAll('.mod-card').forEach((el,i)=>{el.style.transitionDelay=`.${i*15+5}s`});
+document.querySelectorAll('.tech-card').forEach((el,i)=>{el.style.transitionDelay=`.${i*5}s`});
+document.querySelectorAll('.team-card').forEach((el,i)=>{el.style.transitionDelay=`.${i*15+5}s`});
+document.querySelectorAll('.future-card').forEach((el,i)=>{el.style.transitionDelay=`.${i*1+1}s`});
+</script>
+</body>
+</html>
